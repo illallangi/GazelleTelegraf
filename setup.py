@@ -26,6 +26,7 @@ setuptools.setup(
     },
     install_requires=[
         'click',
+        'telegraf_pyplug',
         'illallangi.orpheusapi @ git+https://github.com/illallangi/OrpheusAPI@master',
         'illallangi.redactedapi @ git+https://github.com/illallangi/RedactedAPI@master',
     ]

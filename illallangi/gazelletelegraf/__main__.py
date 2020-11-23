@@ -3,6 +3,7 @@ from typing import Dict
 from click import STRING, command, option
 
 from illallangi.orpheusapi import API as ORP_API, ENDPOINTDEF as ORP_ENDPOINTDEF
+from illallangi.redactedapi import API as RED_API, ENDPOINTDEF as RED_ENDPOINTDEF
 
 from telegraf_pyplug.main import print_influxdb_format
 
@@ -17,17 +18,23 @@ METRICNAMEDEF = 'gazelle'
 @option('--orpheus-api-key',
         envvar='ORPHEUS_API_KEY',
         type=STRING)
-@option('--redacted-api-key',
-        type=STRING)
 @option('--orpheus-endpoint',
         type=STRING,
         required=False,
         default=ORP_ENDPOINTDEF)
+@option('--redacted-api-key',
+        envvar='REDACTED_API_KEY',
+        type=STRING)
+@option('--redacted-endpoint',
+        type=STRING,
+        required=False,
+        default=RED_ENDPOINTDEF)
 def cli(
         metric_name,
         orpheus_api_key,
         orpheus_endpoint,
-        redacted_api_key):
+        redacted_api_key,
+        redacted_endpoint):
 
     if (orpheus_api_key):
         orp_api = ORP_API(orpheus_api_key, orpheus_endpoint, success_expiry=600)
@@ -40,13 +47,38 @@ def cli(
             'tracker': 'ORP'
         }
 
-        fields: Dict[str, int] = {
+        fields: Dict[str, float] = {
             'uploaded': int(orp_index.userstats.uploaded),
             'downloaded': int(orp_index.userstats.downloaded),
             'ratio': orp_index.userstats.ratio,
             'requiredratio': orp_index.userstats.requiredratio,
             'bonuspoints': orp_index.userstats.bonuspoints,
             'bonuspointsperhour': orp_index.userstats.bonuspointsperhour
+        }
+
+        print_influxdb_format(
+            measurement=metric_name,
+            tags=tags,
+            fields=fields,
+            add_timestamp=True
+        )
+
+    if (redacted_api_key):
+        red_api = RED_API(redacted_api_key, redacted_endpoint, success_expiry=600)
+        red_index = red_api.get_index()
+
+        tags: Dict[str, str] = {
+            'id': red_index.id,
+            'username': red_index.username,
+            'class': red_index.userstats.userclass,
+            'tracker': 'RED'
+        }
+
+        fields: Dict[str, float] = {
+            'uploaded': int(red_index.userstats.uploaded),
+            'downloaded': int(red_index.userstats.downloaded),
+            'ratio': red_index.userstats.ratio,
+            'requiredratio': red_index.userstats.requiredratio
         }
 
         print_influxdb_format(
