@@ -4,6 +4,7 @@ from click import STRING, command, option
 
 from illallangi.orpheusapi import API as ORP_API, ENDPOINTDEF as ORP_ENDPOINTDEF
 from illallangi.redactedapi import API as RED_API, ENDPOINTDEF as RED_ENDPOINTDEF
+from illallangi.btnapi import API as BTN_API, ENDPOINTDEF as BTN_ENDPOINTDEF
 
 from telegraf_pyplug.main import print_influxdb_format
 
@@ -29,12 +30,21 @@ METRICNAMEDEF = 'gazelle'
         type=STRING,
         required=False,
         default=RED_ENDPOINTDEF)
+@option('--btn-api-key',
+        envvar='BTN_API_KEY',
+        type=STRING)
+@option('--btn-endpoint',
+        type=STRING,
+        required=False,
+        default=BTN_ENDPOINTDEF)
 def cli(
         metric_name,
         orpheus_api_key,
         orpheus_endpoint,
         redacted_api_key,
-        redacted_endpoint):
+        redacted_endpoint,
+        btn_api_key,
+        btn_endpoint):
 
     if (orpheus_api_key):
         orp_api = ORP_API(orpheus_api_key, orpheus_endpoint, success_expiry=600)
@@ -79,6 +89,31 @@ def cli(
             'downloaded': int(red_index.userstats.downloaded),
             'ratio': red_index.userstats.ratio,
             'requiredratio': red_index.userstats.requiredratio
+        }
+
+        print_influxdb_format(
+            measurement=metric_name,
+            tags=tags,
+            fields=fields,
+            add_timestamp=True
+        )
+
+    if (btn_api_key):
+        btn_api = BTN_API(btn_api_key, btn_endpoint, success_expiry=600)
+        btn_index = btn_api.get_index()
+
+        tags: Dict[str, str] = {
+            'id': btn_index.userid,
+            'username': btn_index.username,
+            'class': btn_index.userclass,
+            'tracker': 'BTN'
+        }
+
+        fields: Dict[str, float] = {
+            'uploaded': int(btn_index.upload),
+            'downloaded': int(btn_index.download),
+            'ratio': int(btn_index.upload) / int(btn_index.download),
+            'bonuspoints': btn_index.bonus
         }
 
         print_influxdb_format(
