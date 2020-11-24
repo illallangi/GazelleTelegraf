@@ -2,9 +2,9 @@ from typing import Dict
 
 from click import STRING, command, option
 
+from illallangi.btnapi import API as BTN_API, ENDPOINTDEF as BTN_ENDPOINTDEF
 from illallangi.orpheusapi import API as ORP_API, ENDPOINTDEF as ORP_ENDPOINTDEF
 from illallangi.redactedapi import API as RED_API, ENDPOINTDEF as RED_ENDPOINTDEF
-from illallangi.btnapi import API as BTN_API, ENDPOINTDEF as BTN_ENDPOINTDEF
 
 from telegraf_pyplug.main import print_influxdb_format
 
